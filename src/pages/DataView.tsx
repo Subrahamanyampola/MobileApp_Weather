@@ -1,290 +1,332 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonItem, IonLabel, IonInput, IonButton, IonSpinner,
-  IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonImg,
-  IonSegment, IonSegmentButton, IonToggle, IonBadge
-} from '@ionic/react';
-import axios from 'axios';
-import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement,
-  LineElement, Title, Tooltip, Legend, Filler
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { auth, db } from '../firebaseConfig';
-import { doc, setDoc, collection, addDoc, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+// import React, { useEffect, useState } from 'react';
+// import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonToast } from '@ionic/react';
+// import { Bar, Pie } from 'react-chartjs-2';
+// import Chart from 'chart.js/auto'; // Import chart.js components
+// import { CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+// // Register the necessary chart components
+// Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const API_KEY = 'a2c4ed8d0e2e807c10714095bd61466c';
+// interface StockData {
+//   date: string;
+//   close: number;
+// }
 
-const DataView: React.FC = () => {
-  const [city, setCity] = useState('');
-  const [currentWeather, setCurrentWeather] = useState<any>(null);
-  const [forecastData, setForecastData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [view, setView] = useState<'current' | 'forecast'>('current');
-  const [recentCities, setRecentCities] = useState<string[]>([]);
-  const [rainAlert, setRainAlert] = useState('');
-  const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-  const [backgroundImage, setBackgroundImage] = useState('');
-  const refreshInterval = useRef<NodeJS.Timeout | null>(null);
+// const StockView: React.FC = () => {
+//   const [stocks, setStocks] = useState<any[]>([]); // List of all available stocks (based on search)
+//   const [searchQuery, setSearchQuery] = useState<string>(''); // Search input for stocks
+//   const [selectedStock, setSelectedStock] = useState<StockData[]>([]); // Selected stock data for chart
+//   const [loading, setLoading] = useState<boolean>(false); // Loading state
+//   const [error, setError] = useState<string | null>(null); // Error state
+//   const [currency, setCurrency] = useState<string>('usd'); // Preferred currency for stock prices
+//   const [showToast, setShowToast] = useState(false); // Toast message for currency change
 
-  const toggleTheme = (isDark: boolean) => {
-    if (isDark) {
-      document.body.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.body.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
+//   const apiKey = 'KIW24JFPGWH9VUAZ'; // Your Alpha Vantage API key
+
+//   useEffect(() => {
+//     if (searchQuery.length > 0) {
+//       fetchStocks(searchQuery);
+//     }
+//   }, [searchQuery, currency]); // Re-fetch when currency changes
+
+//   // Fetch stock data based on search query (e.g., stock symbols)
+//   const fetchStocks = async (query: string) => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const response = await fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${query}&apikey=${apiKey}`);
+//       const data = await response.json();
+//       if (data['Time Series (Daily)']) {
+//         // Only keep the last 3 days of stock data
+//         const stockData = Object.keys(data['Time Series (Daily)'])
+//           .slice(0, 3) // Limit to 3 days
+//           .map((date) => ({
+//             date,
+//             close: parseFloat(data['Time Series (Daily)'][date]['4. close']),
+//           }));
+//         setStocks(stockData);
+//       } else {
+//         setError('No data found for the given stock symbol.');
+//       }
+//     } catch (error) {
+//       setError('Failed to fetch stock data.');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Chart data for the selected stock
+//   const chartData = {
+//     labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
+//     datasets: [
+//       {
+//         label: `Stock Price (${currency.toUpperCase()})`,
+//         data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+//         fill: false,
+//         borderColor: 'rgba(75,192,192,1)',
+//         tension: 0.1,
+//       },
+//     ],
+//   };
+
+//   const barData = {
+//     labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
+//     datasets: [
+//       {
+//         label: `Stock Price (${currency.toUpperCase()})`,
+//         data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+//         backgroundColor: 'rgba(75, 192, 192, 0.2)',
+//         borderColor: 'rgba(75, 192, 192, 1)',
+//         borderWidth: 1,
+//       },
+//     ],
+//   };
+
+//   const pieData = {
+//     labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
+//     datasets: [
+//       {
+//         data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+//         backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+//       },
+//     ],
+//   };
+
+//   const handleCurrencyChange = (value: string) => {
+//     setCurrency(value);
+//     setShowToast(true);
+//   };
+
+//   return (
+//     <IonPage>
+//       <IonHeader>
+//         <IonToolbar>
+//           <IonTitle>Stock Prices</IonTitle>
+//         </IonToolbar>
+//       </IonHeader>
+
+//       <IonContent className="ion-padding">
+//         {/* Currency selection */}
+//         <IonSelect value={currency} onIonChange={(e) => handleCurrencyChange(e.detail.value)}>
+//           <IonSelectOption value="usd">USD - US Dollar</IonSelectOption>
+//           <IonSelectOption value="eur">EUR - Euro</IonSelectOption>
+//           <IonSelectOption value="inr">INR - Indian Rupee</IonSelectOption>
+//         </IonSelect>
+
+//         {/* Search Bar for Stocks */}
+//         <IonSearchbar
+//           value={searchQuery}
+//           debounce={500}
+//           onIonInput={(e) => setSearchQuery(e.detail.value!)}
+//           placeholder="Search for a stock symbol (e.g., AAPL)"
+//         />
+
+//         {/* Error or Loading state */}
+//         {loading && <p>Loading...</p>}
+//         {error && <p style={{ color: 'red' }}>{error}</p>}
+
+//         {/* List of searched stocks */}
+//         <IonList>
+//           {stocks.map((stock) => (
+//             <IonItem key={stock.date} button onClick={() => setSelectedStock([stock])}>
+//               <IonLabel>{stock.date} - ${stock.close}</IonLabel>
+//             </IonItem>
+//           ))}
+//         </IonList>
+
+//         {/* If a stock is selected, show its charts */}
+//         {selectedStock.length > 0 && (
+//           <>
+//             <h2>Stock Data for {searchQuery.toUpperCase()}</h2>
+//             <p>Price History (Last 3 days)</p>
+
+//             {/* Render Bar chart */}
+//             <Bar data={barData} options={{ responsive: true, scales: { y: { beginAtZero: true } } }} />
+
+//             {/* Render Pie chart */}
+//             <Pie data={pieData} />
+
+//           </>
+//         )}
+
+//         {/* Currency Change Toast */}
+//         <IonToast
+//           isOpen={showToast}
+//           message={`Currency updated to ${currency.toUpperCase()}`}
+//           duration={1500}
+//           onDidDismiss={() => setShowToast(false)}
+//         />
+//       </IonContent>
+//     </IonPage>
+//   );
+// };
+
+// export default StockView;
+import React, { useEffect, useState } from 'react';
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSearchbar, IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonToast } from '@ionic/react';
+import { Bar, Pie } from 'react-chartjs-2';
+import Chart from 'chart.js/auto'; // Import chart.js components
+import { CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+// Register the necessary chart components
+Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+interface StockData {
+  date: string;
+  close: number;
+}
+
+const StockView: React.FC = () => {
+  const [stocks, setStocks] = useState<any[]>([]); // List of all available stocks (based on search)
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Search input for stocks
+  const [selectedStock, setSelectedStock] = useState<StockData[]>([]); // Selected stock data for chart
+  const [loading, setLoading] = useState<boolean>(false); // Loading state
+  const [error, setError] = useState<string | null>(null); // Error state
+  const [currency, setCurrency] = useState<string>('usd'); // Preferred currency for stock prices
+  const [showToast, setShowToast] = useState(false); // Toast message for currency change
+
+  const apiKey = 'cvtnf99r01qjg1356gn0cvtnf99r01qjg1356gng'; // Finnhub API key
 
   useEffect(() => {
-    toggleTheme(darkMode);
-  }, [darkMode]);
-
-  useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
-    });
-  }, []);
-
-  const handleInstall = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
-        setDeferredPrompt(null);
-        setShowInstallBtn(false);
-      });
+    if (searchQuery.length > 0) {
+      fetchStocks(searchQuery);
     }
-  };
+  }, [searchQuery, currency]); // Re-fetch when currency changes
 
-  const getVisualVibe = (weatherType: string) => {
-    const type = weatherType.toLowerCase();
-    if (type.includes('rain')) return '/assets/rain.jpg';
-    if (type.includes('clear')) return '/assets/sunny.jpg';
-    if (type.includes('cloud')) return '/assets/cloudy.jpg';
-    if (type.includes('snow')) return '/assets/snow.jpg';
-    if (type.includes('thunder')) return '/assets/storm.jpg';
-    return '/assets/default.jpg';
-  };
-
-  const fetchData = async (customCity?: string) => {
-    const selectedCity = customCity || city;
-    if (!selectedCity) return;
+  // Fetch stock data based on search query (e.g., stock symbols)
+  const fetchStocks = async (query: string) => {
     setLoading(true);
-    setError('');
-
+    setError(null);
     try {
-      const [currentRes, forecastRes] = await Promise.all([
-        axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${selectedCity}&units=metric&appid=${API_KEY}`),
-        axios.get(`https://api.openweathermap.org/data/2.5/forecast?q=${selectedCity}&units=metric&appid=${API_KEY}`)
-      ]);
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${query}&token=${apiKey}`);
+      const data = await response.json();
 
-      setCurrentWeather(currentRes.data);
-      const weatherType = currentRes.data.weather[0].main;
-      const weatherMain = weatherType.toLowerCase();
-      setBackgroundImage(getVisualVibe(weatherType));
-
-      if (["rain", "thunderstorm", "drizzle"].includes(weatherMain)) {
-        setRainAlert(`⚠️ Alert: ${weatherMain.toUpperCase()} expected today! Carry an umbrella ☂️`);
+      if (data) {
+        const stockData = [
+          {
+            date: 'Today',
+            close: data.c, // Current close price
+          },
+          {
+            date: 'Yesterday',
+            close: data.pc, // Previous close price
+          },
+          // You can add more logic for fetching historical data from Finnhub if available.
+        ];
+        setStocks(stockData);
       } else {
-        setRainAlert('');
+        setError('No data found for the given stock symbol.');
       }
-
-      const filtered = forecastRes.data.list.filter((item: any) => item.dt_txt.includes('12:00:00'));
-      setForecastData(filtered);
-
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          await setDoc(doc(db, "users", user.uid), { lastCity: selectedCity }, { merge: true });
-          await addDoc(collection(db, "users", user.uid, "searches"), {
-            city: selectedCity,
-            timestamp: new Date().toISOString(),
-          });
-          fetchRecentCities(user.uid);
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      setError("City not found or API error");
-      setCurrentWeather(null);
-      setForecastData([]);
+    } catch (error) {
+      setError('Failed to fetch stock data.');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRecentCities = async (uid: string) => {
-    const q = query(collection(db, "users", uid, "searches"), orderBy("timestamp", "desc"), limit(3));
-    const snap = await getDocs(q);
-    const cities = snap.docs.map(doc => doc.data().city);
-    setRecentCities(cities);
-  };
-
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
-      const res = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`
-      );
-      setCity(res.data.name);
-      fetchData(res.data.name);
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) fetchRecentCities(user.uid);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (refreshInterval.current) clearInterval(refreshInterval.current);
-    refreshInterval.current = setInterval(() => {
-      if (city) fetchData(city);
-    }, 40000);
-    return () => clearInterval(refreshInterval.current!);
-  }, [city]);
-
-  const labels = forecastData.map(item =>
-    new Date(item.dt_txt).toLocaleDateString('en-GB', { weekday: 'short' })
-  );
-  const temperatures = forecastData.map(item => item.main.temp);
-  const icons = forecastData.map(item =>
-    `https://openweathermap.org/img/wn/${item.weather[0].icon}.png`
-  );
-
+  // Chart data for the selected stock
   const chartData = {
-    labels,
+    labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
     datasets: [
       {
-        label: 'Temp (°C)',
-        data: temperatures,
-        fill: true,
-        borderColor: 'blue',
-        backgroundColor: 'rgba(0, 123, 255, 0.2)',
-        tension: 0.4,
+        label: `Stock Price (${currency.toUpperCase()})`,
+        data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+        fill: false,
+        borderColor: 'rgba(75,192,192,1)',
+        tension: 0.1,
       },
     ],
+  };
+
+  const barData = {
+    labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
+    datasets: [
+      {
+        label: `Stock Price (${currency.toUpperCase()})`,
+        data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const pieData = {
+    labels: selectedStock ? selectedStock.map((stock) => stock.date) : [],
+    datasets: [
+      {
+        data: selectedStock ? selectedStock.map((stock) => stock.close) : [],
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+      },
+    ],
+  };
+
+  const handleCurrencyChange = (value: string) => {
+    setCurrency(value);
+    setShowToast(true);
   };
 
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar color="primary">
-          <IonTitle className="ion-text-center">
-            Weather App <IonBadge color="success">📡 LIVE</IonBadge>
-          </IonTitle>
+        <IonToolbar>
+          <IonTitle>Stock Prices</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-        <IonItem lines="none" className="ion-margin-top">
-          <IonLabel>Dark Mode</IonLabel>
-          <IonToggle
-            checked={darkMode}
-            onIonChange={(e) => setDarkMode(e.detail.checked)}
-            color="dark"
-          />
-        </IonItem>
+      <IonContent className="ion-padding">
+        {/* Currency selection */}
+        <IonSelect value={currency} onIonChange={(e) => handleCurrencyChange(e.detail.value)}>
+          <IonSelectOption value="usd">USD - US Dollar</IonSelectOption>
+          <IonSelectOption value="eur">EUR - Euro</IonSelectOption>
+          <IonSelectOption value="inr">INR - Indian Rupee</IonSelectOption>
+        </IonSelect>
 
-        {showInstallBtn && (
-          <IonButton expand="block" onClick={handleInstall} className="ion-margin-top" color="tertiary">
-            Add to Home Screen 📲
-          </IonButton>
-        )}
+        {/* Search Bar for Stocks */}
+        <IonSearchbar
+          value={searchQuery}
+          debounce={500}
+          onIonInput={(e) => setSearchQuery(e.detail.value!)}
+          placeholder="Search for a stock symbol (e.g., AAPL)"
+        />
 
-        {recentCities.length > 0 && (
-          <IonCard className="ion-margin-top ion-padding">
-            <h4>Recent Cities</h4>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {recentCities.map((cityName, idx) => (
-                <IonButton key={idx} size="small" onClick={() => { setCity(cityName); fetchData(cityName); }}>
-                  {cityName}
-                </IonButton>
-              ))}
-            </div>
-          </IonCard>
-        )}
+        {/* Error or Loading state */}
+        {loading && <p>Loading...</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
 
-        <IonItem>
-          <IonLabel position="stacked">Enter City</IonLabel>
-          <IonInput
-            value={city}
-            onIonChange={(e) => setCity(e.detail.value!)}
-            placeholder="e.g., Dublin"
-          />
-        </IonItem>
+        {/* List of searched stocks */}
+        <IonList>
+          {stocks.map((stock) => (
+            <IonItem key={stock.date} button onClick={() => setSelectedStock([stock])}>
+              <IonLabel>{stock.date} - ${stock.close}</IonLabel>
+            </IonItem>
+          ))}
+        </IonList>
 
-        <IonButton expand="block" onClick={() => fetchData()} className="ion-margin-top">
-          Refresh
-        </IonButton>
-
-        {loading && (
-          <div className="ion-text-center ion-margin-top">
-            <IonSpinner name="dots" />
-          </div>
-        )}
-
-        {error && <p className="ion-text-center ion-text-danger">{error}</p>}
-
-        {rainAlert && (
-          <IonCard color="danger" className="ion-margin-top ion-padding">
-            <h4 style={{ color: 'white', margin: 0 }}>{rainAlert}</h4>
-          </IonCard>
-        )}
-
-        <IonSegment value={view} onIonChange={e => setView(e.detail.value as 'current' | 'forecast')} className="ion-margin-top">
-          <IonSegmentButton value="current">
-            <IonLabel>Current</IonLabel>
-          </IonSegmentButton>
-          <IonSegmentButton value="forecast">
-            <IonLabel>Forecast</IonLabel>
-          </IonSegmentButton>
-        </IonSegment>
-
-        {view === 'current' && currentWeather && !loading && (
-          <IonCard className="ion-margin-top">
-            <IonCardHeader>
-              <IonCardTitle>{currentWeather.name}</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonImg
-                src={`https://openweathermap.org/img/wn/${currentWeather.weather[0].icon}@2x.png`}
-                alt="weather-icon"
-              />
-              <p><strong>Temperature:</strong> {currentWeather.main.temp}°C</p>
-              <p><strong>Condition:</strong> {currentWeather.weather[0].description}</p>
-              <p><strong>Humidity:</strong> {currentWeather.main.humidity}%</p>
-              <p><strong>Wind:</strong> {currentWeather.wind.speed} m/s</p>
-            </IonCardContent>
-          </IonCard>
-        )}
-
-        {view === 'forecast' && forecastData.length > 0 && !loading && (
+        {/* If a stock is selected, show its charts */}
+        {selectedStock.length > 0 && (
           <>
-            <div style={{ height: '300px', marginTop: '20px' }}>
-              <Line data={chartData} />
-            </div>
-            <IonCard className="ion-margin-top ion-padding">
-              <h3 className="ion-text-center">Forecast Icons</h3>
-              <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-                {icons.map((icon, idx) => (
-                  <img key={idx} src={icon} alt={`Day ${idx}`} height="50" />
-                ))}
-              </div>
-            </IonCard>
+            <h2>Stock Data for {searchQuery.toUpperCase()}</h2>
+            <p>Price History (Last 3 days)</p>
+
+            {/* Render Bar chart */}
+            <Bar data={barData} options={{ responsive: true, scales: { y: { beginAtZero: true } } }} />
+
+            {/* Render Pie chart */}
+            <Pie data={pieData} />
           </>
         )}
+
+        {/* Currency Change Toast */}
+        <IonToast
+          isOpen={showToast}
+          message={`Currency updated to ${currency.toUpperCase()}`}
+          duration={1500}
+          onDidDismiss={() => setShowToast(false)}
+        />
       </IonContent>
     </IonPage>
   );
 };
 
-export default DataView;
+export default StockView;

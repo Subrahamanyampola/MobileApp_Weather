@@ -1,9 +1,22 @@
+import React, { useState } from "react";
 import {
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonLabel,
-  IonInput, IonButton, IonToast, IonSegment, IonSegmentButton, IonIcon, IonCard, IonCardContent
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonButton,
+  IonToast,
+  IonSegment,
+  IonSegmentButton,
+  IonIcon,
+  IonCard,
+  IonCardContent
 } from "@ionic/react";
 import { logoGoogle } from 'ionicons/icons';
-import { useState } from "react";
 import { auth, googleProvider, db } from "../firebaseConfig";
 import {
   createUserWithEmailAndPassword,
@@ -36,12 +49,15 @@ const Auth: React.FC = () => {
 
     try {
       if (isLogin) {
+        // Sign in the user with email and password
         await signInWithEmailAndPassword(auth, email, password);
         showMessage("Login Successful ✅");
       } else {
+        // Create new user with email and password
         const userCred = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCred.user;
 
+        // Create new user document in Firestore
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: user.email,
@@ -52,8 +68,10 @@ const Auth: React.FC = () => {
         showMessage("Registered Successfully 🎉");
       }
 
+      // After successful login/registration, redirect to Home
       setTimeout(() => history.push("/home"), 1000);
     } catch (error: any) {
+      // Handle Firebase errors
       if (error.code === "auth/email-already-in-use") {
         showMessage("This email is already registered. Please login instead.");
       } else if (error.code === "auth/invalid-email") {

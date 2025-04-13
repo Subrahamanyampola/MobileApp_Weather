@@ -1,0 +1,23 @@
+/* settings.css */
+
+.settings-container {
+    padding: 20px;
+    background: #f4f4f9;
+  }
+  
+  .settings-title {
+    font-size: 2rem;
+    color: #4e4376;
+    margin-bottom: 20px;
+  }
+  
+  .settings-item {
+    margin-bottom: 20px;
+  }
+  
+  .settings-button {
+    background-color: #4e4376;
+    color: white;
+    margin-top: 20px;
+  }
+  

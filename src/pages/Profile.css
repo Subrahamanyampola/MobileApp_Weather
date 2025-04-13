@@ -1,0 +1,28 @@
+/* profile.css */
+
+.profile-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f4f4f9;
+  }
+  
+  .profile-header {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #4e4376;
+  }
+  
+  .profile-info {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: #555;
+  }
+  
+  .profile-button {
+    background-color: #4e4376;
+    color: white;
+    margin-top: 10px;
+  }
+  
